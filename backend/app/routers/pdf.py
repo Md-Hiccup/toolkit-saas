@@ -9,7 +9,10 @@ from app.utils.pdf_helpers import (
     pdf_to_images,
     images_to_pdf,
     extract_text_from_pdf,
-    extract_text_with_ocr
+    extract_text_with_ocr,
+    encrypt_pdf,
+    decrypt_pdf,
+    remove_pdf_password
 )
 from app.utils.file_helpers import (
     save_upload_file,
@@ -216,3 +219,126 @@ async def extract_text(
         if input_path:
             cleanup_files([input_path])
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/encrypt")
+async def encrypt_pdf_file(
+    file: UploadFile = File(...),
+    password: str = Form(...),
+    owner_password: str = Form(None)
+):
+    """Encrypt a PDF with password protection"""
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="File must be PDF format")
+    
+    if not password or len(password) < 4:
+        raise HTTPException(status_code=400, detail="Password must be at least 4 characters")
+    
+    input_path = None
+    try:
+        # Save uploaded file
+        input_path = await save_upload_file(file, TEMP_DIR)
+        
+        # Encrypt PDF
+        output_filename = generate_unique_filename("encrypted.pdf")
+        output_path = os.path.join(TEMP_DIR, output_filename)
+        encrypt_pdf(input_path, output_path, password, owner_password)
+        
+        # Cleanup input file
+        cleanup_files([input_path])
+        
+        return FileResponse(
+            output_path,
+            media_type="application/pdf",
+            filename="encrypted.pdf",
+            background=None
+        )
+    except Exception as e:
+        if input_path:
+            cleanup_files([input_path])
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/decrypt")
+async def decrypt_pdf_file(
+    file: UploadFile = File(...),
+    password: str = Form(...)
+):
+    """Decrypt a password-protected PDF"""
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="File must be PDF format")
+    
+    if not password:
+        raise HTTPException(status_code=400, detail="Password is required")
+    
+    input_path = None
+    try:
+        # Save uploaded file
+        input_path = await save_upload_file(file, TEMP_DIR)
+        
+        # Decrypt PDF
+        output_filename = generate_unique_filename("decrypted.pdf")
+        output_path = os.path.join(TEMP_DIR, output_filename)
+        decrypt_pdf(input_path, output_path, password)
+        
+        # Cleanup input file
+        cleanup_files([input_path])
+        
+        return FileResponse(
+            output_path,
+            media_type="application/pdf",
+            filename="decrypted.pdf",
+            background=None
+        )
+    except Exception as e:
+        if input_path:
+            cleanup_files([input_path])
+        # Provide more specific error messages
+        error_msg = str(e)
+        if "not encrypted" in error_msg.lower():
+            raise HTTPException(status_code=400, detail="PDF is not password-protected")
+        elif "incorrect password" in error_msg.lower():
+            raise HTTPException(status_code=401, detail="Incorrect password")
+        else:
+            raise HTTPException(status_code=500, detail=error_msg)
+
+@router.post("/remove-password")
+async def remove_password_from_pdf(
+    file: UploadFile = File(...),
+    password: str = Form(...)
+):
+    """Remove password protection from a PDF"""
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="File must be PDF format")
+    
+    if not password:
+        raise HTTPException(status_code=400, detail="Password is required")
+    
+    input_path = None
+    try:
+        # Save uploaded file
+        input_path = await save_upload_file(file, TEMP_DIR)
+        
+        # Remove password
+        output_filename = generate_unique_filename("unlocked.pdf")
+        output_path = os.path.join(TEMP_DIR, output_filename)
+        remove_pdf_password(input_path, output_path, password)
+        
+        # Cleanup input file
+        cleanup_files([input_path])
+        
+        return FileResponse(
+            output_path,
+            media_type="application/pdf",
+            filename="unlocked.pdf",
+            background=None
+        )
+    except Exception as e:
+        if input_path:
+            cleanup_files([input_path])
+        # Provide more specific error messages
+        error_msg = str(e)
+        if "not encrypted" in error_msg.lower():
+            raise HTTPException(status_code=400, detail="PDF is not password-protected")
+        elif "incorrect password" in error_msg.lower():
+            raise HTTPException(status_code=401, detail="Incorrect password")
+        else:
+            raise HTTPException(status_code=500, detail=error_msg)

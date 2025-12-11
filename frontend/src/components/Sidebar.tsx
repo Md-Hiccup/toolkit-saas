@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Merge, Minimize2, Image, FileText, Edit } from 'lucide-react'
+import { Merge, Minimize2, Image, FileText, Edit, Lock, Unlock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navigation = [
@@ -12,6 +12,8 @@ const navigation = [
   { name: 'Image to PDF', href: '/dashboard/image-to-pdf', icon: Image },
   { name: 'View PDF', href: '/dashboard/view-pdf', icon: Edit },
   { name: 'Extract Text', href: '/dashboard/extract-text', icon: FileText },
+  { name: 'Protect PDF', href: '/dashboard/encrypt-pdf', icon: Lock },
+  { name: 'Unlock PDF', href: '/dashboard/decrypt-pdf', icon: Unlock },
 ]
 
 export function Sidebar() {

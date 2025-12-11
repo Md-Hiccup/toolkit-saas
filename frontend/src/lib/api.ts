@@ -107,6 +107,66 @@ export const pdfAPI = {
     
     return response.data
   },
+  
+  encryptPDF: async (file: File, password: string, ownerPassword?: string, onProgress?: (progress: number) => void) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('password', password)
+    if (ownerPassword) {
+      formData.append('owner_password', ownerPassword)
+    }
+    
+    const response = await api.post('/pdf/encrypt', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      responseType: 'blob',
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          onProgress?.(progress)
+        }
+      },
+    })
+    
+    return response.data
+  },
+  
+  decryptPDF: async (file: File, password: string, onProgress?: (progress: number) => void) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('password', password)
+    
+    const response = await api.post('/pdf/decrypt', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      responseType: 'blob',
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          onProgress?.(progress)
+        }
+      },
+    })
+    
+    return response.data
+  },
+  
+  removePassword: async (file: File, password: string, onProgress?: (progress: number) => void) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('password', password)
+    
+    const response = await api.post('/pdf/remove-password', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      responseType: 'blob',
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          onProgress?.(progress)
+        }
+      },
+    })
+    
+    return response.data
+  },
 }
 
 export default api

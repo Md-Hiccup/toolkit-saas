@@ -1,6 +1,6 @@
 import os
 import subprocess
-from typing import List
+from typing import List, Optional
 from pypdf import PdfReader, PdfWriter
 from PIL import Image
 from pdf2image import convert_from_path
@@ -170,3 +170,90 @@ def extract_text_with_ocr(input_path: str) -> str:
             return extract_text_from_pdf(input_path)
         else:
             raise Exception(f"OCR failed: {str(e)}")
+
+def encrypt_pdf(input_path: str, output_path: str, password: str, owner_password: Optional[str] = None) -> str:
+    """
+    Encrypt a PDF with a password
+    
+    Args:
+        input_path: Path to input PDF
+        output_path: Path to save encrypted PDF
+        password: User password (required to open the PDF)
+        owner_password: Owner password (optional, for permissions)
+    
+    Returns:
+        Path to encrypted PDF
+    """
+    reader = PdfReader(input_path)
+    writer = PdfWriter()
+    
+    # Copy all pages
+    for page in reader.pages:
+        writer.add_page(page)
+    
+    # Encrypt with password
+    if owner_password:
+        writer.encrypt(user_password=password, owner_password=owner_password)
+    else:
+        writer.encrypt(user_password=password)
+    
+    # Write encrypted PDF
+    with open(output_path, "wb") as output_file:
+        writer.write(output_file)
+    
+    return output_path
+
+def decrypt_pdf(input_path: str, output_path: str, password: str) -> str:
+    """
+    Decrypt a password-protected PDF
+    
+    Args:
+        input_path: Path to encrypted PDF
+        output_path: Path to save decrypted PDF
+        password: Password to decrypt the PDF
+    
+    Returns:
+        Path to decrypted PDF
+    
+    Raises:
+        Exception: If password is incorrect or PDF cannot be decrypted
+    """
+    reader = PdfReader(input_path)
+    
+    # Check if PDF is encrypted
+    if not reader.is_encrypted:
+        raise Exception("PDF is not encrypted")
+    
+    # Try to decrypt with password
+    if not reader.decrypt(password):
+        raise Exception("Incorrect password")
+    
+    writer = PdfWriter()
+    
+    # Copy all pages
+    for page in reader.pages:
+        writer.add_page(page)
+    
+    # Write decrypted PDF (without encryption)
+    with open(output_path, "wb") as output_file:
+        writer.write(output_file)
+    
+    return output_path
+
+def remove_pdf_password(input_path: str, output_path: str, password: str) -> str:
+    """
+    Remove password protection from a PDF
+    
+    Args:
+        input_path: Path to password-protected PDF
+        output_path: Path to save unlocked PDF
+        password: Current password of the PDF
+    
+    Returns:
+        Path to unlocked PDF
+    
+    Raises:
+        Exception: If password is incorrect or PDF cannot be unlocked
+    """
+    # This is essentially the same as decrypt_pdf
+    return decrypt_pdf(input_path, output_path, password)
