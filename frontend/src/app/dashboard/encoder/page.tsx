@@ -5,9 +5,11 @@ import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
+import { Textarea } from '@/components/ui/Textarea'
+import { Select } from '@/components/ui/Select'
 import { encoderAPI } from '@/lib/api'
 import toast from 'react-hot-toast'
-import { Copy, ArrowRightLeft, Loader2 } from 'lucide-react'
+import { Copy, ArrowRightLeft, Loader2, ArrowLeftRight, Trash2 } from 'lucide-react'
 
 type EncoderTool = {
   id: string
@@ -27,6 +29,8 @@ const tools: EncoderTool[] = [
   { id: 'url-base64', name: 'URL Base64', category: 'Encoders/Decoders', encode: encoderAPI.urlBase64Encode, decode: encoderAPI.urlBase64Decode },
   { id: 'mime-base64', name: 'MIME Base64', category: 'Encoders/Decoders', encode: encoderAPI.mimeBase64Encode, decode: encoderAPI.mimeBase64Decode },
   { id: 'url', name: 'URL Encoding', category: 'Encoders/Decoders', encode: encoderAPI.urlEncode, decode: encoderAPI.urlDecode },
+  { id: 'html', name: 'HTML Encoding', category: 'Encoders/Decoders', encode: encoderAPI.htmlEncode, decode: encoderAPI.htmlDecode },
+  { id: 'unicode', name: 'Unicode', category: 'Encoders/Decoders', encode: encoderAPI.unicodeEscape, decode: encoderAPI.unicodeUnescape },
   
   // Cryptography - Hashing
   { id: 'md5', name: 'MD5', category: 'Cryptography', transform: encoderAPI.hashMD5 },
@@ -58,7 +62,9 @@ const tools: EncoderTool[] = [
 
 export default function EncoderPage() {
   const searchParams = useSearchParams()
-  const [selectedTool, setSelectedTool] = useState<EncoderTool>(tools[0])
+  // Filter tools to only Encoders/Decoders
+  const encoderOnlyTools = tools.filter(t => t.category === 'Encoders/Decoders')
+  const [selectedTool, setSelectedTool] = useState<EncoderTool>(encoderOnlyTools[0])
   const [inputText, setInputText] = useState('')
   const [outputText, setOutputText] = useState('')
   const [secret, setSecret] = useState('')
@@ -70,8 +76,6 @@ export default function EncoderPage() {
   const [loremLength, setLoremLength] = useState(500)
   const [loremMode, setLoremMode] = useState<'paragraphs' | 'characters'>('paragraphs')
   const [useLoremIpsum, setUseLoremIpsum] = useState(false)
-
-  const categories = Array.from(new Set(tools.map(t => t.category)))
 
   // Handle URL query parameter for tool selection
   useEffect(() => {
@@ -89,6 +93,8 @@ export default function EncoderPage() {
       }
     }
   }, [searchParams])
+
+  // Removed auto-processing - now using button
 
   const validateInput = (): boolean => {
     // Reset errors
@@ -296,10 +302,11 @@ export default function EncoderPage() {
       }
 
       setOutputText(result)
-      toast.success('Operation completed!')
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Operation failed')
-      setOutputText('')
+      const errorMsg = typeof error.response?.data?.detail === 'string' 
+        ? error.response.data.detail 
+        : error.message || 'Operation failed'
+      setOutputText(`Error: ${errorMsg}`)
     } finally {
       setIsProcessing(false)
     }
@@ -375,38 +382,124 @@ export default function EncoderPage() {
 
   return (
     <div className="p-8">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2">
-          {isGenerator ? 'Generator' : 'Encoder / Decoder'}
-        </h1>
-        <p className="text-gray-600 mb-8">
-          {isGenerator 
-            ? 'Generate random data and placeholder text'
-            : 'Encode, decode, hash, and transform text with various algorithms'
-          }
-        </p>
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Encoders / Decoders</h1>
+          <p className="text-gray-600">
+            Encode, decode, and transform text with various algorithms
+          </p>
+        </div>
+
+        {/* Controls */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4 flex-wrap">
+              {/* Tool Selector */}
+              <Select
+                value={selectedTool.id}
+                onChange={(e) => {
+                  const tool = encoderOnlyTools.find(t => t.id === e.target.value)
+                  if (tool) {
+                    setInputText('')
+                    setOutputText('')
+                    setSecret('')
+                    setInputError('')
+                    setSecretError('')
+                    setSelectedTool(tool)
+                  }
+                }}
+              >
+                {encoderOnlyTools.map(tool => (
+                  <option key={tool.id} value={tool.id}>
+                    {tool.name}
+                  </option>
+                ))}
+              </Select>
+
+              {/* Mode Selector for Encoders/Decoders */}
+              {!selectedTool.transform && !isGenerator && (
+                <Select
+                  value={activeTab}
+                  onChange={(e) => setActiveTab(e.target.value as 'encode' | 'decode')}
+                >
+                  <option value="encode">Encode</option>
+                  <option value="decode">Decode</option>
+                </Select>
+              )}
+
+              {/* Action Button */}
+              {!isGenerator && (
+                <Button
+                  onClick={handleProcess}
+                  disabled={isProcessing || !inputText}
+                  className="gap-2 ml-auto"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    selectedTool.transform 
+                      ? selectedTool.category === 'Cryptography' ? 'Hash' : 'Transform'
+                      : activeTab === 'encode' ? 'Encode' : 'Decode'
+                  )}
+                </Button>
+              )}
+
+              {/* Swap Button */}
+              {!selectedTool.transform && !isGenerator && (
+                <Button
+                  onClick={handleSwap}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  disabled={!outputText}
+                >
+                  <ArrowLeftRight className="h-4 w-4" />
+                  Swap
+                </Button>
+              )}
+
+              {/* Clear Button */}
+              <Button
+                onClick={handleClear}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={!inputText && !outputText}
+              >
+                <Trash2 className="h-4 w-4" />
+                Clear
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Secret Key Input - Above panels */}
+        {selectedTool.requiresSecret && !isGenerator && (
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Secret Key
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Enter secret key (min 3 characters)"
+                  value={secret}
+                  onChange={(e) => handleSecretChange(e.target.value)}
+                  className={secretError ? 'border-red-500' : ''}
+                />
+                {secretError && (
+                  <p className="text-red-500 text-sm mt-1">{secretError}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>{selectedTool.name}</CardTitle>
-                    <CardDescription>{selectedTool.category}</CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={handleClear}>
-                      Clear
-                    </Button>
-                    {!selectedTool.transform && !isGenerator && (
-                      <Button variant="outline" size="sm" onClick={handleSwap}>
-                        <ArrowRightLeft className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
                 {/* Generator UI - Only show generate button and output */}
                 {isGenerator ? (
                   <>
@@ -536,122 +629,69 @@ export default function EncoderPage() {
                   </>
                 ) : (
                   <>
-                {/* Regular Encoder/Decoder UI */}
-                {/* Encode/Decode Tabs */}
-                {!selectedTool.transform && (
-                  <div className="flex gap-2 border-b">
-                    <button
-                      onClick={() => setActiveTab('encode')}
-                      className={`px-4 py-2 font-medium transition-colors ${
-                        activeTab === 'encode'
-                          ? 'border-b-2 border-blue-600 text-blue-600'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      Encode
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('decode')}
-                      className={`px-4 py-2 font-medium transition-colors ${
-                        activeTab === 'decode'
-                          ? 'border-b-2 border-blue-600 text-blue-600'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      Decode
-                    </button>
-                  </div>
-                )}
+                {/* Editor panels - Side by side */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Input */}
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle>Input</CardTitle>
+                        <button
+                          onClick={() => handleCopy(inputText)}
+                          className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
+                          disabled={!inputText}
+                        >
+                          <Copy className="h-3 w-3" />
+                          Copy
+                        </button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <textarea
+                        className={`w-full h-[calc(100vh-350px)] min-h-[400px] p-4 font-mono text-sm border-2 rounded-lg resize-y focus:outline-none focus:ring-2 ${
+                          inputError 
+                            ? 'border-red-500 focus:ring-red-500' 
+                            : 'border-gray-300 focus:ring-blue-500'
+                        }`}
+                        placeholder="Enter text to encode/decode..."
+                        value={inputText}
+                        onChange={(e) => handleInputChange(e.target.value)}
+                        spellCheck={false}
+                      />
+                      {inputError && (
+                        <p className="mt-2 text-sm text-red-600">{inputError}</p>
+                      )}
+                    </CardContent>
+                  </Card>
 
-                {/* Secret Key Input */}
-                {selectedTool.requiresSecret && (
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Secret Key
-                    </label>
-                    <Input
-                      type="text"
-                      placeholder="Enter secret key (min 3 characters)"
-                      value={secret}
-                      onChange={(e) => handleSecretChange(e.target.value)}
-                      className={secretError ? 'border-red-500' : ''}
-                    />
-                    {secretError && (
-                      <p className="text-red-500 text-sm mt-1">{secretError}</p>
-                    )}
-                  </div>
-                )}
-
-                {/* Input Text */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium">
-                      Input
-                    </label>
-                    <button
-                      onClick={() => handleCopy(inputText)}
-                      className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
-                      disabled={!inputText}
-                    >
-                      <Copy className="h-3 w-3" />
-                      Copy
-                    </button>
-                  </div>
-                  <textarea
-                    className={`w-full h-48 p-3 border rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 ${
-                      inputError ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
-                    }`}
-                    placeholder="Enter text here..."
-                    value={inputText}
-                    onChange={(e) => handleInputChange(e.target.value)}
-                  />
-                  {inputError && (
-                    <p className="text-red-500 text-sm mt-1">{inputError}</p>
-                  )}
-                </div>
-
-                {/* Process Button */}
-                <Button
-                  onClick={handleProcess}
-                  disabled={isProcessing || !inputText}
-                  className="w-full"
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    selectedTool.transform ? 'Transform' : activeTab === 'encode' ? 'Encode' : 'Decode'
-                  )}
-                </Button>
-
-                {/* Output Text */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium">
-                      Output
-                    </label>
-                    <button
-                      onClick={() => handleCopy(outputText)}
-                      className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
-                      disabled={!outputText}
-                    >
-                      <Copy className="h-3 w-3" />
-                      Copy
-                    </button>
-                  </div>
-                  <textarea
-                    className="w-full h-48 p-3 border rounded-lg font-mono text-sm resize-none bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Output will appear here..."
-                    value={outputText}
-                    readOnly
-                  />
+                  {/* Output */}
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle>Output</CardTitle>
+                        <button
+                          onClick={() => handleCopy(outputText)}
+                          className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
+                          disabled={!outputText}
+                        >
+                          <Copy className="h-3 w-3" />
+                          Copy
+                        </button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <textarea
+                        className="w-full h-[calc(100vh-350px)] min-h-[400px] p-4 font-mono text-sm border-2 border-gray-300 rounded-lg resize-y bg-gray-50 focus:outline-none"
+                        placeholder="Output will appear here..."
+                        value={outputText}
+                        readOnly
+                        spellCheck={false}
+                      />
+                    </CardContent>
+                  </Card>
                 </div>
                 </>
                 )}
-              </CardContent>
-            </Card>
         </div>
       </div>
     </div>

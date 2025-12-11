@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { 
   Merge, Minimize2, Image, FileText, Edit, Lock, Unlock, 
   Code2, ChevronDown, ChevronRight, FileType, Hash, Braces, 
-  Type, Wand2
+  Type, Wand2, FileJson
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -34,56 +34,33 @@ const navigation: MenuItem[] = [
   },
   {
     name: 'Encoders/Decoders',
-    icon: Code2,
-    children: [
-      { name: 'JWT', href: '/dashboard/encoder?tool=jwt', icon: Code2 },
-      { name: 'Base32', href: '/dashboard/encoder?tool=base32', icon: Code2 },
-      { name: 'Base64', href: '/dashboard/encoder?tool=base64', icon: Code2 },
-      { name: 'URL Base64', href: '/dashboard/encoder?tool=url-base64', icon: Code2 },
-      { name: 'MIME Base64', href: '/dashboard/encoder?tool=mime-base64', icon: Code2 },
-      { name: 'URL Encoding', href: '/dashboard/encoder?tool=url', icon: Code2 },
-    ]
+    href: '/dashboard/encoder',
+    icon: Code2
   },
   {
     name: 'Cryptography',
-    icon: Hash,
-    children: [
-      { name: 'MD5', href: '/dashboard/encoder?tool=md5', icon: Hash },
-      { name: 'SHA1', href: '/dashboard/encoder?tool=sha1', icon: Hash },
-      { name: 'SHA256', href: '/dashboard/encoder?tool=sha256', icon: Hash },
-      { name: 'SHA512', href: '/dashboard/encoder?tool=sha512', icon: Hash },
-      { name: 'HMAC-MD5', href: '/dashboard/encoder?tool=hmac-md5', icon: Hash },
-      { name: 'HMAC-SHA1', href: '/dashboard/encoder?tool=hmac-sha1', icon: Hash },
-      { name: 'HMAC-SHA256', href: '/dashboard/encoder?tool=hmac-sha256', icon: Hash },
-      { name: 'HMAC-SHA512', href: '/dashboard/encoder?tool=hmac-sha512', icon: Hash },
-    ]
+    href: '/dashboard/cryptography',
+    icon: Hash
   },
   {
     name: 'Formatting',
-    icon: Braces,
-    children: [
-      { name: 'JSON Format', href: '/dashboard/encoder?tool=json-format', icon: Braces },
-      { name: 'JSON Minify', href: '/dashboard/encoder?tool=json-minify', icon: Braces },
-    ]
+    href: '/dashboard/formatting',
+    icon: Braces
   },
   {
-    name: 'Text Tools',
-    icon: Type,
-    children: [
-      { name: 'UPPERCASE', href: '/dashboard/encoder?tool=uppercase', icon: Type },
-      { name: 'lowercase', href: '/dashboard/encoder?tool=lowercase', icon: Type },
-      { name: 'Title Case', href: '/dashboard/encoder?tool=titlecase', icon: Type },
-      { name: 'Reverse Text', href: '/dashboard/encoder?tool=reverse', icon: Type },
-      { name: 'Sort Lines', href: '/dashboard/encoder?tool=sort', icon: Type },
-    ]
+    name: 'Text Transform',
+    href: '/dashboard/text-transform',
+    icon: Type
   },
   {
     name: 'Generators',
-    icon: Wand2,
-    children: [
-      { name: 'UUID', href: '/dashboard/encoder?tool=uuid', icon: Wand2 },
-      { name: 'Lorem Ipsum', href: '/dashboard/encoder?tool=lorem', icon: Wand2 },
-    ]
+    href: '/dashboard/generators',
+    icon: Wand2
+  },
+  {
+    name: 'JSON Editor',
+    href: '/dashboard/json-editor',
+    icon: FileJson
   },
 ]
 

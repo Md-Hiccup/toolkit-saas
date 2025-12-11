@@ -9,7 +9,7 @@ class EncodeRequest(BaseModel):
     text: str
     secret: Optional[str] = None
     algorithm: Optional[str] = "HS256"
-    indent: Optional[int] = 2
+    indent: Optional[int] = None
     paragraphs: Optional[int] = 3
     use_lorem: Optional[bool] = False
 
@@ -139,6 +139,44 @@ async def url_decode_endpoint(request: EncodeRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+# HTML Encoding Endpoints
+@router.post("/html/encode", response_model=EncodeResponse)
+async def html_encode_endpoint(request: EncodeRequest):
+    """HTML encode text"""
+    try:
+        result = html_encode(request.text)
+        return EncodeResponse(result=result)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/html/decode", response_model=EncodeResponse)
+async def html_decode_endpoint(request: EncodeRequest):
+    """HTML decode text"""
+    try:
+        result = html_decode(request.text)
+        return EncodeResponse(result=result)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# Unicode Endpoints
+@router.post("/unicode/escape", response_model=EncodeResponse)
+async def unicode_escape_endpoint(request: EncodeRequest):
+    """Unicode escape text"""
+    try:
+        result = unicode_escape(request.text)
+        return EncodeResponse(result=result)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/unicode/unescape", response_model=EncodeResponse)
+async def unicode_unescape_endpoint(request: EncodeRequest):
+    """Unicode unescape text"""
+    try:
+        result = unicode_unescape(request.text)
+        return EncodeResponse(result=result)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 # Hashing Endpoints
 @router.post("/hash/md5", response_model=EncodeResponse)
 async def hash_md5_endpoint(request: EncodeRequest):
@@ -202,7 +240,8 @@ async def hmac_sha512_endpoint(request: EncodeRequest):
 async def json_format_endpoint(request: EncodeRequest):
     """Format JSON"""
     try:
-        result = format_json(request.text, request.indent)
+        indent = request.indent if request.indent is not None else 2
+        result = format_json(request.text, indent)
         return EncodeResponse(result=result)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid JSON: {str(e)}")
@@ -259,5 +298,12 @@ async def generate_lorem_endpoint(request: Optional[EncodeRequest] = None):
     """Generate Lorem Ipsum or Random Text"""
     paragraphs = request.paragraphs if request and request.paragraphs else 3
     use_lorem = request.use_lorem if request and request.use_lorem is not None else False
-    result = generate_lorem_ipsum(paragraphs, use_lorem)
+    # Check if characters parameter is provided (for character-based generation)
+    characters = None
+    if request and hasattr(request, 'indent') and request.indent and request.indent > 0:
+        characters = request.indent  # Reusing indent field for characters count
+    
+    print(f"DEBUG: paragraphs={paragraphs}, use_lorem={use_lorem}, characters={characters}")
+    result = generate_lorem_ipsum(paragraphs, use_lorem, characters)
+    print(f"DEBUG: result length={len(result)}")
     return EncodeResponse(result=result)

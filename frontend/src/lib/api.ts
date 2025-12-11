@@ -237,6 +237,28 @@ export const encoderAPI = {
     return response.data.result
   },
   
+  // HTML Encoding
+  htmlEncode: async (text: string) => {
+    const response = await api.post('/encoder/html/encode', { text })
+    return response.data.result
+  },
+  
+  htmlDecode: async (text: string) => {
+    const response = await api.post('/encoder/html/decode', { text })
+    return response.data.result
+  },
+  
+  // Unicode
+  unicodeEscape: async (text: string) => {
+    const response = await api.post('/encoder/unicode/escape', { text })
+    return response.data.result
+  },
+  
+  unicodeUnescape: async (text: string) => {
+    const response = await api.post('/encoder/unicode/unescape', { text })
+    return response.data.result
+  },
+  
   // Hashing
   hashMD5: async (text: string) => {
     const response = await api.post('/encoder/hash/md5', { text })
@@ -322,8 +344,18 @@ export const encoderAPI = {
     return response.data.result
   },
   
-  generateLorem: async (paragraphs: number = 3, useLorem: boolean = false) => {
-    const response = await api.post('/encoder/generate/lorem', { text: '', paragraphs, use_lorem: useLorem })
+  generateLorem: async (paragraphs: number = 3, useLorem: boolean = false, characters?: number) => {
+    const payload: any = { 
+      text: '', 
+      paragraphs: paragraphs,
+      use_lorem: useLorem 
+    }
+    // Only add indent field for character mode
+    if (characters !== undefined && characters > 0) {
+      payload.indent = characters
+    }
+    console.log('API payload:', payload)
+    const response = await api.post('/encoder/generate/lorem', payload)
     return response.data.result
   },
 }

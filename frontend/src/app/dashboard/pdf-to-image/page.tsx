@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { FileUpload } from '@/components/FileUpload'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Select } from '@/components/ui/Select'
 import { pdfAPI } from '@/lib/api'
 import { formatFileSize } from '@/lib/utils'
 import toast from 'react-hot-toast'
@@ -92,103 +93,139 @@ export default function PdfToImagePage() {
           Convert PDF pages to PNG or JPG images
         </p>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Upload PDF File</CardTitle>
-            <CardDescription>
-              Select a PDF file to convert to images
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <FileUpload
-              accept=".pdf"
-              multiple={false}
-              files={files}
-              onFilesSelected={setFiles}
-              disabled={isProcessing}
-            />
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Output Format</label>
-              <select
+        {/* Controls */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4 flex-wrap">
+              {/* Format Selector */}
+              <Select
                 value={format}
                 onChange={(e) => setFormat(e.target.value)}
                 disabled={isProcessing}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="png">PNG (Better quality)</option>
                 <option value="jpg">JPG (Smaller size)</option>
-              </select>
-            </div>
+              </Select>
 
-            {isProcessing && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span>Processing...</span>
-                  <span>{progress}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full transition-all"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {resultBlob && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-3">
-                <p className="text-green-800 font-medium">
-                  ✓ Images ready in {format.toUpperCase()} format! {isProcessing && '(Re-converting...)'}
-                </p>
-                <div className="text-sm text-gray-700 space-y-1">
-                  <div className="flex justify-between">
-                    <span>Original PDF:</span>
-                    <span className="font-medium">{formatFileSize(originalSize)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Images ZIP:</span>
-                    <span className="font-medium">{formatFileSize(zipSize)}</span>
-                  </div>
-                  {zipSize > originalSize && (
-                    <div className="flex justify-between text-blue-700">
-                      <span>Increase:</span>
-                      <span className="font-medium">
-                        {formatFileSize(zipSize - originalSize)} ({Math.round((zipSize / originalSize - 1) * 100)}%)
-                      </span>
-                    </div>
+              {/* Convert Button */}
+              {!hasConverted && (
+                <Button
+                  onClick={handleConvert}
+                  disabled={files.length === 0 || isProcessing}
+                  className="gap-2 ml-auto"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Converting...
+                    </>
+                  ) : (
+                    'Convert to Images'
                   )}
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <Button onClick={handleDownload} disabled={isProcessing}>
-                    <Download className="mr-2 h-4 w-4" />
-                    {isProcessing ? 'Processing...' : 'Download Images (ZIP)'}
-                  </Button>
-                  <Button variant="outline" onClick={handleReset} disabled={isProcessing}>
-                    Start Over
-                  </Button>
-                </div>
-              </div>
-            )}
+                </Button>
+              )}
 
-            {!hasConverted && (
-              <Button
-                onClick={handleConvert}
-                disabled={files.length === 0 || isProcessing}
-                className="w-full"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Converting...
-                  </>
-                ) : (
-                  'Convert to Images'
-                )}
-              </Button>
-            )}
+              {/* Reset Button */}
+              {hasConverted && (
+                <Button variant="outline" onClick={handleReset} disabled={isProcessing} className="ml-auto">
+                  Start Over
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
+
+        {/* Side-by-side Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
+          {/* Left: File Upload (30%) */}
+          <div className="lg:col-span-3">
+            <Card className="h-full">
+              <CardHeader>
+                <CardTitle>Upload PDF File</CardTitle>
+                <CardDescription>
+                  Select a PDF file to convert to images
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <FileUpload
+                  accept=".pdf"
+                  multiple={false}
+                  files={files}
+                  onFilesSelected={setFiles}
+                  disabled={isProcessing}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right: Progress and Results (70%) */}
+          <div className="lg:col-span-7">
+            <Card className="h-full">
+              <CardHeader>
+                <CardTitle>
+                  {isProcessing ? 'Processing...' : resultBlob ? 'Results' : 'Status'}
+                </CardTitle>
+                <CardDescription>
+                  {isProcessing ? 'Converting PDF to images' : resultBlob ? 'Conversion complete' : 'Upload a file to begin'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                {!isProcessing && !resultBlob && (
+                  <div className="text-center text-gray-500 py-8">
+                    <p>Select a PDF file and click "Convert to Images" to start</p>
+                  </div>
+                )}
+
+                {isProcessing && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Processing...</span>
+                      <span className="font-semibold">{progress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div
+                        className="bg-blue-600 h-3 rounded-full transition-all"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {resultBlob && (
+                  <div className="space-y-4 -mb-3">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <p className="text-green-700 text-sm font-medium mb-3">
+                        ✓ Images ready in {format.toUpperCase()} format! {isProcessing && '(Re-converting...)'}
+                      </p>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Original PDF:</span>
+                          <span className="font-semibold text-gray-900">{formatFileSize(originalSize)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Images ZIP:</span>
+                          <span className="font-semibold text-gray-900">{formatFileSize(zipSize)}</span>
+                        </div>
+                        {zipSize > originalSize && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-blue-700">Increase:</span>
+                            <span className="font-semibold text-blue-700">
+                              {formatFileSize(zipSize - originalSize)} ({Math.round((zipSize / originalSize - 1) * 100)}%)
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <Button onClick={handleDownload} disabled={isProcessing} className="w-full bg-gray-900 hover:bg-gray-800">
+                      <Download className="mr-2 h-4 w-4" />
+                      {isProcessing ? 'Processing...' : 'Download Images (ZIP)'}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import pdf, encoder
+from app.routers import pdf, encoder, json_editor
 from app.utils.file_helpers import ensure_directories, schedule_cleanup_task
 import asyncio
 
@@ -32,6 +32,7 @@ app.add_middleware(
 # Include routers
 app.include_router(pdf.router)
 app.include_router(encoder.router)
+app.include_router(json_editor.router)
 
 @app.get("/")
 async def root():

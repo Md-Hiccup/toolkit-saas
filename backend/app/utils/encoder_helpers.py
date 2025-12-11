@@ -4,6 +4,7 @@ import hmac
 import jwt
 import json
 import urllib.parse
+import html
 
 # Encoding/Decoding functions
 def jwt_encode(text: str, secret: str, algorithm: str = 'HS256') -> str:
@@ -57,8 +58,47 @@ def url_encode(text: str) -> str:
     return urllib.parse.quote(text)
 
 def url_decode(text: str) -> str:
-    """URL decode text"""
+    """Decode URL-encoded text"""
     return urllib.parse.unquote(text)
+
+def html_encode(text: str) -> str:
+    """Encode HTML entities"""
+    return html.escape(text)
+
+def html_decode(text: str) -> str:
+    """Decode HTML entities"""
+    return html.unescape(text)
+
+def unicode_escape(text: str) -> str:
+    """Escape Unicode characters"""
+    return text.encode('unicode-escape').decode('ascii')
+
+def unicode_unescape(text: str) -> str:
+    """Unescape Unicode characters"""
+    return text.encode('ascii').decode('unicode-escape')
+
+# JSON Formatting functions
+def format_json(text: str, indent: int = 2) -> str:
+    """Format JSON with indentation"""
+    data = json.loads(text)
+    return json.dumps(data, indent=indent, ensure_ascii=False)
+
+def minify_json(text: str) -> str:
+    """Minify JSON by removing whitespace"""
+    data = json.loads(text)
+    return json.dumps(data, separators=(',', ':'), ensure_ascii=False)
+
+# Aliases for backward compatibility
+encode_jwt = jwt_encode
+decode_jwt = jwt_decode
+encode_base32 = base32_encode
+decode_base32 = base32_decode
+encode_base64 = base64_encode
+decode_base64 = base64_decode
+encode_url_base64 = url_base64_encode
+decode_url_base64 = url_base64_decode
+encode_mime_base64 = mime_base64_encode
+decode_mime_base64 = mime_base64_decode
 
 # Hashing functions
 def hash_md5(text: str) -> str:
@@ -133,8 +173,14 @@ def generate_uuid() -> str:
     import uuid
     return str(uuid.uuid4())
 
-def generate_lorem_ipsum(paragraphs: int = 3, use_lorem: bool = False) -> str:
-    """Generate varied placeholder text or traditional Lorem Ipsum"""
+def generate_lorem_ipsum(paragraphs: int = 3, use_lorem: bool = False, characters: int = None) -> str:
+    """Generate varied placeholder text or traditional Lorem Ipsum
+    
+    Args:
+        paragraphs: Number of paragraphs to generate (if characters is None)
+        use_lorem: Use traditional Lorem Ipsum text
+        characters: If specified, generate text with approximately this many characters
+    """
     import random
     
     # Traditional Lorem Ipsum text
@@ -184,6 +230,17 @@ def generate_lorem_ipsum(paragraphs: int = 3, use_lorem: bool = False) -> str:
         sentences = [generate_sentence() for _ in range(num_sentences)]
         return ' '.join(sentences)
     
+    # Character-based generation
+    if characters is not None and characters > 0:
+        result_text = ""
+        while len(result_text) < characters:
+            result_text += generate_sentence() + " "
+        # Trim to requested length but don't cut mid-word
+        if len(result_text) > characters:
+            result_text = result_text[:characters].rstrip()
+        return result_text
+    
+    # Paragraph-based generation
     result = []
     for _ in range(paragraphs):
         result.append(generate_paragraph())

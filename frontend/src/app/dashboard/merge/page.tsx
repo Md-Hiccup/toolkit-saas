@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { FileUpload } from '@/components/FileUpload'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Select } from '@/components/ui/Select'
 import { pdfAPI } from '@/lib/api'
 import { formatFileSize } from '@/lib/utils'
 import toast from 'react-hot-toast'
@@ -11,6 +12,7 @@ import { Download, Loader2 } from 'lucide-react'
 
 export default function MergePage() {
   const [files, setFiles] = useState<File[]>([])
+  const [quality, setQuality] = useState('original')
   const [isProcessing, setIsProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
   const [resultBlob, setResultBlob] = useState<Blob | null>(null)
@@ -88,105 +90,157 @@ export default function MergePage() {
           Combine multiple PDF files into a single document
         </p>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Upload PDF Files</CardTitle>
-            <CardDescription>
-              Select at least 2 PDF files to merge
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <FileUpload
-                accept=".pdf"
-                multiple={true}
-                files={files}
-                onFilesSelected={setFiles}
-                disabled={isProcessing}
-              />
+        {/* Controls */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4 flex-wrap">
               {files.length > 0 && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">{files.length} file{files.length !== 1 ? 's' : ''} selected</span>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleClearFiles}
-                    disabled={isProcessing}
-                  >
-                    Clear Selection
-                  </Button>
-                </div>
+                <span className="text-sm text-gray-600">{files.length} file{files.length !== 1 ? 's' : ''} selected</span>
+              )}
+
+              {/* Quality Selector */}
+              <Select
+                value={quality}
+                onChange={(e) => setQuality(e.target.value)}
+                disabled={isProcessing}
+              >
+                <option value="original">Original (No compression, preserve quality)</option>
+                <option value="low">Low (Smallest file, 150 DPI, high compression)</option>
+                <option value="medium">Medium (Balanced, 200 DPI, moderate compression)</option>
+                <option value="high">High (Best quality, 300 DPI, low compression)</option>
+              </Select>
+
+              {/* Merge Button */}
+              {!resultBlob && (
+                <Button
+                  onClick={handleMerge}
+                  disabled={files.length < 2 || isProcessing}
+                  className="gap-2 ml-auto"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Merging...
+                    </>
+                  ) : (
+                    'Merge PDFs'
+                  )}
+                </Button>
+              )}
+
+              {/* Reset Button */}
+              {resultBlob && (
+                <Button variant="outline" onClick={handleReset} disabled={isProcessing} className="ml-auto">
+                  Start Over
+                </Button>
+              )}
+
+              {/* Clear Button */}
+              {files.length > 0 && !resultBlob && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleClearFiles}
+                  disabled={isProcessing}
+                >
+                  Clear Selection
+                </Button>
               )}
             </div>
-
-            {isProcessing && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span>Processing...</span>
-                  <span>{progress}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full transition-all"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {resultBlob && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-3">
-                <p className="text-green-800 font-medium">
-                  ✓ PDFs merged successfully!
-                </p>
-                <div className="text-sm text-gray-700 space-y-1">
-                  <div className="flex justify-between">
-                    <span>Original files ({files.length}):</span>
-                    <span className="font-medium">{formatFileSize(originalSize)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Merged PDF:</span>
-                    <span className="font-medium">{formatFileSize(mergedSize)}</span>
-                  </div>
-                  {mergedSize < originalSize && (
-                    <div className="flex justify-between text-green-700">
-                      <span>Saved:</span>
-                      <span className="font-medium">
-                        {formatFileSize(originalSize - mergedSize)} ({Math.round((1 - mergedSize / originalSize) * 100)}%)
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <Button onClick={handleDownload}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Merged PDF
-                  </Button>
-                  <Button variant="outline" onClick={handleReset}>
-                    Merge More Files
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {!resultBlob && (
-              <Button
-                onClick={handleMerge}
-                disabled={files.length < 2 || isProcessing}
-                className="w-full"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Merging...
-                  </>
-                ) : (
-                  `Merge ${files.length} PDF${files.length !== 1 ? 's' : ''}`
-                )}
-              </Button>
-            )}
           </CardContent>
         </Card>
+
+        {/* Side-by-side Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
+          {/* Left: File Upload (30%) */}
+          <div className="lg:col-span-3">
+            <Card className="h-full">
+              <CardHeader>
+                <CardTitle>Upload PDF Files</CardTitle>
+                <CardDescription>
+                  Select at least 2 PDF files to merge
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <FileUpload
+                  accept=".pdf"
+                  multiple={true}
+                  files={files}
+                  onFilesSelected={setFiles}
+                  disabled={isProcessing}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right: Progress and Results (70%) */}
+          <div className="lg:col-span-7">
+            <Card className="h-full">
+              <CardHeader>
+                <CardTitle>
+                  {isProcessing ? 'Processing...' : resultBlob ? 'Results' : 'Status'}
+                </CardTitle>
+                <CardDescription>
+                  {isProcessing ? 'Merging your PDFs' : resultBlob ? 'Merge complete' : 'Upload files to begin'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                {!isProcessing && !resultBlob && (
+                  <div className="text-center text-gray-500 py-8">
+                    <p>Select at least 2 PDF files and click "Merge PDFs" to start</p>
+                  </div>
+                )}
+
+                {isProcessing && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Processing...</span>
+                      <span className="font-semibold">{progress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div
+                        className="bg-blue-600 h-3 rounded-full transition-all"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {resultBlob && (
+                  <div className="space-y-4 -mb-3">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <p className="text-green-700 text-sm font-medium mb-3">
+                        ✓ PDFs merged successfully!
+                      </p>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Original files ({files.length}):</span>
+                          <span className="font-semibold text-gray-900">{formatFileSize(originalSize)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Merged PDF:</span>
+                          <span className="font-semibold text-gray-900">{formatFileSize(mergedSize)}</span>
+                        </div>
+                        {mergedSize < originalSize && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-green-700">Saved:</span>
+                            <span className="font-semibold text-green-700">
+                              {formatFileSize(originalSize - mergedSize)} ({Math.round((1 - mergedSize / originalSize) * 100)}%)
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <Button onClick={handleDownload} disabled={isProcessing} className="w-full bg-gray-900 hover:bg-gray-800">
+                      <Download className="mr-2 h-4 w-4" />
+                      {isProcessing ? 'Processing...' : 'Download Merged PDF'}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   )
