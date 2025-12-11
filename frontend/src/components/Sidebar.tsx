@@ -1,49 +1,162 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Merge, Minimize2, Image, FileText, Edit, Lock, Unlock } from 'lucide-react'
+import { 
+  Merge, Minimize2, Image, FileText, Edit, Lock, Unlock, 
+  Code2, ChevronDown, ChevronRight, FileType, Hash, Braces, 
+  Type, Wand2
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const navigation = [
-  { name: 'Compress PDF', href: '/dashboard/compress', icon: Minimize2 },
-  { name: 'Merge PDFs', href: '/dashboard/merge', icon: Merge },
-  { name: 'PDF to Image', href: '/dashboard/pdf-to-image', icon: Image },
-  { name: 'Image to PDF', href: '/dashboard/image-to-pdf', icon: Image },
-  { name: 'View PDF', href: '/dashboard/view-pdf', icon: Edit },
-  { name: 'Extract Text', href: '/dashboard/extract-text', icon: FileText },
-  { name: 'Protect PDF', href: '/dashboard/encrypt-pdf', icon: Lock },
-  { name: 'Unlock PDF', href: '/dashboard/decrypt-pdf', icon: Unlock },
+type MenuItem = {
+  name: string
+  href?: string
+  icon: any
+  children?: MenuItem[]
+}
+
+const navigation: MenuItem[] = [
+  {
+    name: 'PDF Toolkit',
+    icon: FileType,
+    children: [
+      { name: 'Compress PDF', href: '/dashboard/compress', icon: Minimize2 },
+      { name: 'Merge PDFs', href: '/dashboard/merge', icon: Merge },
+      { name: 'PDF to Image', href: '/dashboard/pdf-to-image', icon: Image },
+      { name: 'Image to PDF', href: '/dashboard/image-to-pdf', icon: Image },
+      { name: 'View PDF', href: '/dashboard/view-pdf', icon: Edit },
+      { name: 'Extract Text', href: '/dashboard/extract-text', icon: FileText },
+      { name: 'Protect PDF', href: '/dashboard/encrypt-pdf', icon: Lock },
+      { name: 'Unlock PDF', href: '/dashboard/decrypt-pdf', icon: Unlock },
+    ]
+  },
+  {
+    name: 'Encoders/Decoders',
+    icon: Code2,
+    children: [
+      { name: 'JWT', href: '/dashboard/encoder?tool=jwt', icon: Code2 },
+      { name: 'Base32', href: '/dashboard/encoder?tool=base32', icon: Code2 },
+      { name: 'Base64', href: '/dashboard/encoder?tool=base64', icon: Code2 },
+      { name: 'URL Base64', href: '/dashboard/encoder?tool=url-base64', icon: Code2 },
+      { name: 'MIME Base64', href: '/dashboard/encoder?tool=mime-base64', icon: Code2 },
+      { name: 'URL Encoding', href: '/dashboard/encoder?tool=url', icon: Code2 },
+    ]
+  },
+  {
+    name: 'Cryptography',
+    icon: Hash,
+    children: [
+      { name: 'MD5', href: '/dashboard/encoder?tool=md5', icon: Hash },
+      { name: 'SHA1', href: '/dashboard/encoder?tool=sha1', icon: Hash },
+      { name: 'SHA256', href: '/dashboard/encoder?tool=sha256', icon: Hash },
+      { name: 'SHA512', href: '/dashboard/encoder?tool=sha512', icon: Hash },
+      { name: 'HMAC-MD5', href: '/dashboard/encoder?tool=hmac-md5', icon: Hash },
+      { name: 'HMAC-SHA1', href: '/dashboard/encoder?tool=hmac-sha1', icon: Hash },
+      { name: 'HMAC-SHA256', href: '/dashboard/encoder?tool=hmac-sha256', icon: Hash },
+      { name: 'HMAC-SHA512', href: '/dashboard/encoder?tool=hmac-sha512', icon: Hash },
+    ]
+  },
+  {
+    name: 'Formatting',
+    icon: Braces,
+    children: [
+      { name: 'JSON Format', href: '/dashboard/encoder?tool=json-format', icon: Braces },
+      { name: 'JSON Minify', href: '/dashboard/encoder?tool=json-minify', icon: Braces },
+    ]
+  },
+  {
+    name: 'Text Tools',
+    icon: Type,
+    children: [
+      { name: 'UPPERCASE', href: '/dashboard/encoder?tool=uppercase', icon: Type },
+      { name: 'lowercase', href: '/dashboard/encoder?tool=lowercase', icon: Type },
+      { name: 'Title Case', href: '/dashboard/encoder?tool=titlecase', icon: Type },
+      { name: 'Reverse Text', href: '/dashboard/encoder?tool=reverse', icon: Type },
+      { name: 'Sort Lines', href: '/dashboard/encoder?tool=sort', icon: Type },
+    ]
+  },
+  {
+    name: 'Generators',
+    icon: Wand2,
+    children: [
+      { name: 'UUID', href: '/dashboard/encoder?tool=uuid', icon: Wand2 },
+      { name: 'Lorem Ipsum', href: '/dashboard/encoder?tool=lorem', icon: Wand2 },
+    ]
+  },
 ]
 
-export function Sidebar() {
+function NavItem({ item, level = 0 }: { item: MenuItem; level?: number }) {
+  const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+  const Icon = item.icon
 
+  const hasChildren = item.children && item.children.length > 0
+  const isActive = item.href ? pathname === item.href : false
+
+  if (hasChildren) {
+    return (
+      <div>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            'w-full flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors',
+            'hover:bg-gray-800',
+            level > 0 && 'pl-8'
+          )}
+        >
+          <div className="flex items-center gap-3">
+            <Icon className="h-4 w-4" />
+            <span>{item.name}</span>
+          </div>
+          {isOpen ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </button>
+        {isOpen && item.children && (
+          <div className="mt-1 space-y-1">
+            {item.children.map((child) => (
+              <NavItem key={child.name} item={child} level={level + 1} />
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (!item.href) return null
+
+  return (
+    <Link
+      href={item.href}
+      className={cn(
+        'flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors',
+        level > 0 && 'pl-8',
+        isActive
+          ? 'bg-blue-600 text-white'
+          : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      <span>{item.name}</span>
+    </Link>
+  )
+}
+
+export function Sidebar() {
   return (
     <div className="flex h-screen w-64 flex-col bg-gray-900 text-white">
       <div className="flex h-16 items-center justify-center border-b border-gray-800">
-        <h1 className="text-xl font-bold">PDF Toolkit</h1>
+        <h1 className="text-xl font-bold">Toolkit</h1>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              {item.name}
-            </Link>
-          )
-        })}
+      <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
+        {navigation.map((item) => (
+          <NavItem key={item.name} item={item} />
+        ))}
       </nav>
     </div>
   )

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import pdf
+from app.routers import pdf, encoder
 from app.utils.file_helpers import ensure_directories, schedule_cleanup_task
 import asyncio
 
@@ -9,7 +9,7 @@ ensure_directories()
 
 app = FastAPI(
     title="Toolkit API",
-    description="API for PDF processing operations",
+    description="API for PDF processing and encoding/decoding operations",
     version="1.0.0"
 )
 
@@ -31,6 +31,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(pdf.router)
+app.include_router(encoder.router)
 
 @app.get("/")
 async def root():
