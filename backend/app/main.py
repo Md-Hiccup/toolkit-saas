@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import pdf, encoder, json_editor
 from app.utils.file_helpers import ensure_directories, schedule_cleanup_task
+from app.config import settings
 import asyncio
 
 # Create necessary directories
