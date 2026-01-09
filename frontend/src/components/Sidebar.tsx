@@ -62,7 +62,7 @@ const navigation: MenuItem[] = [
   },
 ]
 
-function NavItem({ item, level = 0 }: { item: MenuItem; level?: number }) {
+function NavItem({ item, level = 0, onLinkClick }: { item: MenuItem; level?: number; onLinkClick?: () => void }) {
   const pathname = usePathname()
   const Icon = item.icon
 
@@ -72,15 +72,13 @@ function NavItem({ item, level = 0 }: { item: MenuItem; level?: number }) {
   // Check if any child is active
   const hasActiveChild = hasChildren && item.children?.some(child => child.href === pathname)
   
-  // Auto-expand if has active child
+  // Auto-expand if has active child, keep expanded state
   const [isOpen, setIsOpen] = useState(hasActiveChild || false)
   
-  // Update isOpen when pathname changes
+  // Update isOpen when pathname changes - expand if child is active, collapse if not
   useEffect(() => {
-    if (hasActiveChild) {
-      setIsOpen(true)
-    }
-  }, [pathname, hasActiveChild])
+    setIsOpen(hasActiveChild || false)
+  }, [hasActiveChild, pathname])
 
   if (hasChildren) {
     return (
@@ -106,7 +104,7 @@ function NavItem({ item, level = 0 }: { item: MenuItem; level?: number }) {
         {isOpen && item.children && (
           <div className="mt-1 space-y-1">
             {item.children.map((child) => (
-              <NavItem key={child.name} item={child} level={level + 1} />
+              <NavItem key={child.name} item={child} level={level + 1} onLinkClick={onLinkClick} />
             ))}
           </div>
         )}
@@ -119,6 +117,7 @@ function NavItem({ item, level = 0 }: { item: MenuItem; level?: number }) {
   return (
     <Link
       href={item.href}
+      onClick={onLinkClick}
       className={cn(
         'flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors',
         level > 0 && 'pl-8',
@@ -133,18 +132,42 @@ function NavItem({ item, level = 0 }: { item: MenuItem; level?: number }) {
   )
 }
 
-export function Sidebar() {
-  return (
-    <div className="flex h-screen w-64 flex-col bg-gray-900 text-white">
-      <Link href="/dashboard" className="flex h-16 items-center justify-center border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
-        <h1 className="text-xl font-bold">Toolkit</h1>
-      </Link>
+interface SidebarProps {
+  isOpen?: boolean
+  onClose?: () => void
+}
 
-      <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
-        {navigation.map((item) => (
-          <NavItem key={item.name} item={item} />
-        ))}
-      </nav>
-    </div>
+export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
+  return (
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div className={cn(
+        "fixed lg:static inset-y-0 left-0 z-50 flex h-screen w-64 flex-col bg-gray-900 text-white transition-transform duration-300 ease-in-out",
+        "lg:translate-x-0",
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <Link 
+          href="/dashboard" 
+          onClick={onClose}
+          className="flex h-16 items-center justify-center border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer"
+        >
+          <h1 className="text-xl font-bold">Toolkit</h1>
+        </Link>
+
+        <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
+          {navigation.map((item) => (
+            <NavItem key={item.name} item={item} onLinkClick={onClose} />
+          ))}
+        </nav>
+      </div>
+    </>
   )
 }

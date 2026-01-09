@@ -100,7 +100,7 @@ export function FileUpload({
     <div className="w-full">
       <div
         className={cn(
-          'relative border-2 border-dashed rounded-lg p-8 text-center transition-colors',
+          'relative border-2 border-dashed rounded-lg p-4 sm:p-8 text-center transition-colors',
           dragActive ? 'border-primary bg-primary/5' : 'border-gray-300',
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary'
         )}
@@ -118,19 +118,19 @@ export function FileUpload({
           title=""
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
-        <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <p className="text-lg font-medium mb-2">
+        <Upload className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-3 sm:mb-4" />
+        <p className="text-base sm:text-lg font-medium mb-2">
           {dragActive ? 'Drop files here' : 'Drag & drop files here'}
         </p>
-        <p className="text-sm text-gray-500 mb-2">or</p>
+        <p className="text-xs sm:text-sm text-gray-500 mb-2">or</p>
         <Button 
           type="button"
           variant="outline" 
-          className="relative z-10 pointer-events-none"
+          className="relative z-10 pointer-events-none text-sm"
         >
           Choose Files
         </Button>
-        <p className="text-xs text-gray-400 mt-4">
+        <p className="text-xs text-gray-400 mt-3 sm:mt-4">
           {accept} • Max {formatFileSize(maxSize)}
         </p>
       </div>
@@ -140,12 +140,12 @@ export function FileUpload({
           {files.map((file, index) => (
             <div
               key={index}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              className="flex items-center justify-between gap-2 p-3 bg-gray-50 rounded-lg"
             >
-              <div className="flex items-center space-x-3">
-                <File className="h-5 w-5 text-gray-400" />
-                <div>
-                  <p className="text-sm font-medium">{file.name}</p>
+              <div className="flex items-center space-x-3 min-w-0 flex-1">
+                <File className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">{file.name}</p>
                   <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
                 </div>
               </div>
@@ -154,6 +154,7 @@ export function FileUpload({
                 size="icon"
                 onClick={() => removeFile(index)}
                 disabled={disabled}
+                className="flex-shrink-0"
               >
                 <X className="h-4 w-4" />
               </Button>

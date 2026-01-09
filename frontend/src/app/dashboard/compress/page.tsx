@@ -89,22 +89,23 @@ export default function CompressPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2">Compress PDF</h1>
-        <p className="text-gray-600 mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Compress PDF</h1>
+        <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8">
           Reduce PDF file size while maintaining quality
         </p>
 
         {/* Controls */}
         <Card className="mb-6">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
               {/* Quality Selector */}
               <Select
                 value={quality}
                 onChange={(e) => setQuality(e.target.value)}
                 disabled={isProcessing}
+                className="w-full sm:flex-1"
               >
                 <option value="low">Low (Smallest file, 150 DPI, high compression)</option>
                 <option value="medium">Medium (Balanced, 200 DPI, moderate compression)</option>
@@ -116,7 +117,7 @@ export default function CompressPage() {
                 <Button
                   onClick={handleCompress}
                   disabled={files.length === 0 || isProcessing}
-                  className="gap-2 ml-auto"
+                  className="gap-2 w-full sm:w-auto sm:ml-auto"
                 >
                   {isProcessing ? (
                     <>
@@ -131,7 +132,7 @@ export default function CompressPage() {
 
               {/* Reset Button */}
               {hasConverted && (
-                <Button variant="outline" onClick={handleReset} disabled={isProcessing} className="ml-auto">
+                <Button variant="outline" onClick={handleReset} disabled={isProcessing} className="w-full sm:w-auto sm:ml-auto">
                   Start Over
                 </Button>
               )}

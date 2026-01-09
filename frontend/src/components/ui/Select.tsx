@@ -56,14 +56,13 @@ const Select = ({ value, onChange, disabled, children, className }: SelectProps)
   }
 
   return (
-    <div className="relative inline-block min-w-[300px]" ref={dropdownRef}>
+    <div className={`relative inline-block w-full sm:min-w-[300px] ${className}`} ref={dropdownRef}>
       <button
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={`
           w-full
-          min-w-[300px]
           px-4 py-2.5
           pr-10
           bg-white
@@ -81,7 +80,6 @@ const Select = ({ value, onChange, disabled, children, className }: SelectProps)
           focus:border-blue-500
           disabled:opacity-50
           disabled:cursor-not-allowed
-          ${className}
         `}
       >
         {selectedOption?.label}
@@ -91,7 +89,7 @@ const Select = ({ value, onChange, disabled, children, className }: SelectProps)
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute z-50 w-full min-w-[300px] mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
           {options.map((option) => (
             <div
               key={option.value}
