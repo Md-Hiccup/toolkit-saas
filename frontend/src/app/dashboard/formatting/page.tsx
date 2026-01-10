@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 // import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
 import { encoderAPI } from '@/lib/api'
 import toast from 'react-hot-toast'
-import { Copy, Trash2, Loader2, ArrowLeftRight } from 'lucide-react'
+import { Copy, Trash2, Loader2, ArrowLeftRight, AlertCircle, CheckCircle } from 'lucide-react'
 
 type FormatTool = {
   id: string
@@ -25,6 +25,25 @@ export default function FormattingPage() {
   const [inputText, setInputText] = useState('')
   const [outputText, setOutputText] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState('')
+  const [isValid, setIsValid] = useState(true)
+
+  // Auto-validate JSON as user types
+  useEffect(() => {
+    try {
+      if (inputText.trim()) {
+        JSON.parse(inputText)
+        setIsValid(true)
+        setError('')
+      } else {
+        setIsValid(true)
+        setError('')
+      }
+    } catch (e: any) {
+      setIsValid(false)
+      setError(e.message)
+    }
+  }, [inputText])
 
   const handleProcess = async () => {
     if (!inputText.trim()) {
@@ -94,10 +113,27 @@ export default function FormattingPage() {
                 ))}
               </Select>
 
+              {/* Validation status - moved to left */}
+              {inputText && (
+                <div className="flex items-center gap-2">
+                  {isValid ? (
+                    <div className="flex items-center gap-2 text-green-600 text-sm">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>Valid JSON</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-red-600 text-sm">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{error}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Transform Button */}
               <Button
                 onClick={handleProcess}
-                disabled={isProcessing || !inputText}
+                disabled={isProcessing || !inputText || !isValid}
                 className="gap-2 ml-auto"
               >
                 {isProcessing ? (
@@ -156,7 +192,11 @@ export default function FormattingPage() {
             </CardHeader>
             <CardContent>
               <textarea
-                className="w-full h-[calc(100vh-350px)] min-h-[400px] p-4 font-mono text-sm border-2 border-gray-300 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full h-[calc(100vh-350px)] min-h-[400px] p-4 font-mono text-sm border-2 rounded-lg resize-y focus:outline-none focus:ring-2 ${
+                  isValid 
+                    ? 'border-gray-300 focus:ring-blue-500' 
+                    : 'border-red-300 focus:ring-red-500'
+                }`}
                 placeholder="Enter JSON to format..."
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
