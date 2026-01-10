@@ -3,7 +3,7 @@ import './globals.css'
 import { Toaster } from 'react-hot-toast'
 
 export const metadata: Metadata = {
-  title: 'PDF Toolkit - Manage Your PDFs',
+  title: 'Toolkit',
   description: 'Merge, compress, convert, and extract text from PDFs',
 }
 
